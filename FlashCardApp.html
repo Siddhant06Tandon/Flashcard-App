@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            border-radius: 10px;
+            font-size: 24px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .card-front {
+            background: #667eea;
+            color: white;
+        }
+
+        .card-back {
+            background: #764ba2;
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .card-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #ddd;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #ccc;
+        }
+
+        .add-card-section {
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .add-card-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .hint {
+            font-size: 14px;
+            color: #999;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Flashcard App</h1>
+        
+        <div class="card-container">
+            <div class="card" id="flashcard" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <p id="question">Click "Add New Card" to get started!</p>
+                </div>
+                <div class="card-face card-back">
+                    <p id="answer">Your answer will appear here</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-info">
+            <span id="card-counter">Card 0 of 0</span>
+        </div>
+
+        <div class="controls">
+            <button class="btn-secondary" onclick="previousCard()">← Previous</button>
+            <button class="btn-primary" onclick="flipCard()">Flip Card</button>
+            <button class="btn-secondary" onclick="nextCard()">Next →</button>
+        </div>
+
+        <div class="add-card-section">
+            <h2>Add New Card</h2>
+            <input type="text" id="new-question" placeholder="Enter question">
+            <textarea id="new-answer" placeholder="Enter answer"></textarea>
+            <button class="btn-primary" onclick="addCard()" style="width: 100%;">Add Card</button>
+            <p class="hint">Tip: Click on the card to flip it!</p>
+        </div>
+    </div>
+
+    <script>
+        // Array to store flashcards
+        let flashcards = [];
+        let currentIndex = 0;
+
+        // Load cards from localStorage when page loads
+        function loadCards() {
+            const saved = localStorage.getItem('flashcards');
+            if (saved) {
+                flashcards = JSON.parse(saved);
+                if (flashcards.length > 0) {
+                    displayCard();
+                }
+            }
+        }
+
+        // Save cards to localStorage
+        function saveCards() {
+            localStorage.setItem('flashcards', JSON.stringify(flashcards));
+        }
+
+        // Display current card
+        function displayCard() {
+            const card = document.getElementById('flashcard');
+            const question = document.getElementById('question');
+            const answer = document.getElementById('answer');
+            const counter = document.getElementById('card-counter');
+
+            // Remove flip if card is flipped
+            card.classList.remove('flipped');
+
+            if (flashcards.length === 0) {
+                question.textContent = 'Click "Add New Card" to get started!';
+                answer.textContent = 'Your answer will appear here';
+                counter.textContent = 'Card 0 of 0';
+            } else {
+                question.textContent = flashcards[currentIndex].question;
+                answer.textContent = flashcards[currentIndex].answer;
+                counter.textContent = `Card ${currentIndex + 1} of ${flashcards.length}`;
+            }
+        }
+
+        // Flip the card
+        function flipCard() {
+            if (flashcards.length === 0) return;
+            const card = document.getElementById('flashcard');
+            card.classList.toggle('flipped');
+        }
+
+        // Go to next card
+        function nextCard() {
+            if (flashcards.length === 0) return;
+            currentIndex = (currentIndex + 1) % flashcards.length;
+            displayCard();
+        }
+
+        // Go to previous card
+        function previousCard() {
+            if (flashcards.length === 0) return;
+            currentIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
+            displayCard();
+        }
+
+        // Add new card
+        function addCard() {
+            const questionInput = document.getElementById('new-question');
+            const answerInput = document.getElementById('new-answer');
+            
+            const question = questionInput.value.trim();
+            const answer = answerInput.value.trim();
+
+            if (question === '' || answer === '') {
+                alert('Please enter both question and answer!');
+                return;
+            }
+
+            // Add new card to array
+            flashcards.push({
+                question: question,
+                answer: answer
+            });
+
+            // Save to localStorage
+            saveCards();
+
+            // Clear inputs
+            questionInput.value = '';
+            answerInput.value = '';
+
+            // Show the new card
+            currentIndex = flashcards.length - 1;
+            displayCard();
+
+            alert('Card added successfully!');
+        }
+
+        // Load cards when page loads
+        loadCards();
+    </script>
+</body>
+</html>

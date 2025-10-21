@@ -10,6 +10,8 @@ A simple and interactive **Flash Card App** to help users learn and memorize inf
 - **Review Mode:** Flip cards to test your memory.  
 - **Responsive UI:** Works on desktop and mobile.
 
+---
+
 ## Tools Used
 
 - HTML, CSS, JavaScript

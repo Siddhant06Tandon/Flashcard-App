@@ -14,4 +14,4 @@ A simple and interactive **Flash Card App** to help users learn and memorize inf
 
 ## Preview
 
-![App Screenshot](FlashcardApp.png)
+![App Screenshot](FlashCardApp.png)
